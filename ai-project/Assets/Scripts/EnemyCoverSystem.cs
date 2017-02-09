@@ -1,20 +1,18 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.AI;
 
 public class EnemyCoverSystem : MonoBehaviour {
 
-	public float movSpeed;
-
-	PlayerMovement player;
+	PlayerController player;
 	List<Vector3> coverPoints = new List<Vector3>();
-	NavMeshAgent agent;
-	public bool movingToCover { get; private set; }
+	EnemyMovement movement;
+
+	bool movingToCover;
 
 	void Start () {
-		player = FindObjectOfType<PlayerMovement>();
-		agent = GetComponent<NavMeshAgent>();
+		player = FindObjectOfType<PlayerController>();
+		movement = GetComponent<EnemyMovement>();
 	}
 
 	void Update () {
@@ -22,36 +20,14 @@ public class EnemyCoverSystem : MonoBehaviour {
 	}
 
 	public void TakeCover () {
-		if (!movingToCover) {
-			var noLOSPoints = PointsWithoutLOS(coverPoints);
-			print(noLOSPoints.Count);
+		if (!movingToCover && HasLineOfSight(transform.position, player.transform)) {
+			var noLOSPoints = PointsWithoutLOS(coverPoints); /*DEBUG ->*/ //print(noLOSPoints.Count);
 			var closestPoint = GetClosestPoint(transform.position, noLOSPoints);
 
-			NavMeshPath path = new NavMeshPath();
-			agent.CalculatePath(closestPoint, path);
-			if (path.corners.Length > 0 && PathLenght(path.corners) > 1f) {
-				StartCoroutine(MoveToCover(path.corners));
+			if (movement.GetCornersToPoint(closestPoint).Length > 0 && movement.PathLenght(closestPoint) > 1f) {
+				movement.MoveToPoint(closestPoint);
 			}
 		}
-	}
-
-	IEnumerator MoveToCover (Vector3[] corners) {
-		movingToCover = true;
-
-		for (int i = 0; i < corners.Length - 1; i++) {
-			Debug.DrawLine(corners[i], corners[i + 1], Color.cyan, 2f);
-		}
-
-		for (int i = 1; i < corners.Length; i++) {
-			var dist = Vector3.Distance(transform.position, corners[i]);
-			var dir = (corners[i] - transform.position).normalized;
-			while (dist > 0) {
-				transform.position += dir * movSpeed * Time.deltaTime;
-				dist -= movSpeed * Time.deltaTime;
-				yield return new WaitForEndOfFrame();
-			}
-		}	
-		movingToCover = false;
 	}
 
 	bool HasLineOfSight (Vector3 from, Transform to) {
@@ -105,12 +81,10 @@ public class EnemyCoverSystem : MonoBehaviour {
 	}
 
 	Vector3 GetClosestPoint (Vector3 from, List<Vector3> pL) {
-		var closestPoint = Vector3.up * 1000;
+		var closestPoint = from;
 		float smallestDist = Mathf.Infinity;
 		foreach (Vector3 v in pL) {
-			NavMeshPath path = new NavMeshPath();
-			agent.CalculatePath(v, path);
-			var dist = PathLenght(path.corners);
+			var dist = movement.PathLenght(v);
 
 			if (dist < smallestDist) {
 				smallestDist = dist;
@@ -118,13 +92,5 @@ public class EnemyCoverSystem : MonoBehaviour {
 			}
 		}
 		return closestPoint;
-	}
-
-	float PathLenght (Vector3[] corners) {
-		float dist = 0f;
-		for (int i = 0; i < corners.Length - 1; i++) {
-			dist += Vector3.Distance(corners[i], corners[i + 1]);
-		}
-		return dist;
 	}
 }

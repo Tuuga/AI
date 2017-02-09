@@ -1,19 +1,32 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.AI;
 
 public class EnemyController : MonoBehaviour {
 
 	EnemyCoverSystem coverSystem;
-	//NavMeshAgent agent;
+	EnemyAttacking attacking;
+	EnemyMovement movement;
+
+	// DEBUG
+	bool toggle;
 
 	void Start () {
 		coverSystem = GetComponent<EnemyCoverSystem>();
-		//agent = GetComponent<NavMeshAgent>();
+		attacking = GetComponent<EnemyAttacking>();
+		movement = GetComponent<EnemyMovement>();
 	}
 
 	void Update () {
-		coverSystem.TakeCover();
+		if (Input.GetKeyDown(KeyCode.Space)) {	
+			toggle = !toggle;
+			movement.StopMoving();
+		}
+
+		if (toggle) {
+			coverSystem.TakeCover();
+		} else {
+			attacking.MoveTowardsPlayer();
+		}
 	}
 }

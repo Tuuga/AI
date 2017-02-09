@@ -14,7 +14,7 @@ public class PlayerAiming : MonoBehaviour {
 	}
 
 	Vector3 GetWorldMousePosition () {
-		Plane plane = new Plane(Vector3.up, Vector3.zero);
+		Plane plane = new Plane(Vector3.up, Vector3.up * transform.position.y);
 		Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 		float dist;
 		plane.Raycast(ray, out dist);
