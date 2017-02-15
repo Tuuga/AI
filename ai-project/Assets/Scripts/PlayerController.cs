@@ -11,7 +11,7 @@ public class PlayerController : MonoBehaviour {
 		shooting = GetComponent<Shooting>();
 		aiming = GetComponent<PlayerAiming>();
 	}
-
+	
 	void Update () {
 		if (Input.GetKey(KeyCode.Mouse0)) {
 			shooting.Shoot(aiming.dir);

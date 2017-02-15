@@ -8,8 +8,6 @@ public class EnemyCoverSystem : MonoBehaviour {
 	List<Vector3> coverPoints = new List<Vector3>();
 	EnemyMovement movement;
 
-	bool movingToCover;
-
 	void Start () {
 		player = FindObjectOfType<PlayerController>();
 		movement = GetComponent<EnemyMovement>();
@@ -20,7 +18,7 @@ public class EnemyCoverSystem : MonoBehaviour {
 	}
 
 	public void TakeCover () {
-		if (!movingToCover && HasLineOfSight(transform.position, player.transform)) {
+		if (HasLineOfSight(transform.position, player.transform)) {
 			var noLOSPoints = PointsWithoutLOS(coverPoints); /*DEBUG ->*/ //print(noLOSPoints.Count);
 			var closestPoint = GetClosestPoint(transform.position, noLOSPoints);
 
@@ -30,7 +28,7 @@ public class EnemyCoverSystem : MonoBehaviour {
 		}
 	}
 
-	bool HasLineOfSight (Vector3 from, Transform to) {
+	public bool HasLineOfSight (Vector3 from, Transform to) {
 		var dir = to.position - from;
 		Ray ray = new Ray(from, dir);
 		RaycastHit hit;
