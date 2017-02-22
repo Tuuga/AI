@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class UserInterface : MonoBehaviour {
 
@@ -9,11 +10,17 @@ public class UserInterface : MonoBehaviour {
 	public float visualizationSpeed;
 	public Color emptyC, blockC, startC, endC, processedC, pathC;
 
+	public Text processedCount, pathCount, methodType;
+
 	[TextArea(15, 100)]
 	public string keys;
 
+	public enum SearchMethod { BFS, DFS }
+	public SearchMethod useMethod;
+
 	Map map;
 	BFS bfs;
+	DFS dfs;
 
 	List<TileProperties> processed;
 	List<TileProperties> path;
@@ -23,6 +30,7 @@ public class UserInterface : MonoBehaviour {
 	void Start () {
 		map = FindObjectOfType<Map>();
 		bfs = FindObjectOfType<BFS>();
+		dfs = FindObjectOfType<DFS>();
 	}
 
 	void Update () {
@@ -51,8 +59,18 @@ public class UserInterface : MonoBehaviour {
 			foreach (TileProperties t in allTiles) {
 				t.SetNeighbours();
 			}
-			path = bfs.Search();
-			processed = bfs.processed;
+
+			if (useMethod == SearchMethod.BFS) {
+				path = bfs.Search();
+				processed = bfs.processed;
+			} else if (useMethod == SearchMethod.DFS) {
+				path = dfs.Search();
+				processed = dfs.processed;
+			}
+
+			processedCount.text = "Processed: " + processed.Count;
+			pathCount.text = "Path: " + path.Count;
+			methodType.text = "Method: " + useMethod.ToString();
 		}
 
 		if (Input.GetKeyDown(KeyCode.Z)) {
