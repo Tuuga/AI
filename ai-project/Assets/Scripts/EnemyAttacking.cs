@@ -18,7 +18,7 @@ public class EnemyAttacking : MonoBehaviour {
 	}
 
 	public void MoveTowardsPlayer () {
-		var dist = Vector3.Distance(transform.position, player.position);
+		//var dist = Vector3.Distance(transform.position, player.position);
 		var losPoints = PointsWithLOS(coverPoints);
 		var closestPoint = GetClosestPoint(transform.position, losPoints);
 		movement.MoveToPoint(closestPoint);
