@@ -2,21 +2,22 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BFS : MonoBehaviour {
+public class DFS : MonoBehaviour {
 
 	public List<Node> processed { get; private set; }
 
 	public List<Node> Search () {
 		processed = new List<Node>();
-		var q = new Queue<Node>();
-		q.Enqueue(Grid.start);
+		var s = new Stack<Node>();
 
 		var discovered = new Dictionary<Node, Node>();
 		discovered.Add(Grid.start, null);
+		var disc = new List<Node>();
 
-		while (q.Count > 0) {
-			var v = q.Dequeue();
-			
+		s.Push(Grid.start);
+		while (s.Count > 0) {
+			var v = s.Pop();
+
 			if (v.type == Node.NodeType.End) {
 				var path = new List<Node>();
 				path.Add(v);
@@ -28,14 +29,19 @@ public class BFS : MonoBehaviour {
 				path.Reverse();
 				return path;
 			}
-			foreach (Node t in v.neighbours) {
-				if (!discovered.ContainsKey(t) && t.type != Node.NodeType.Block) {
-					q.Enqueue(t);
-					discovered.Add(t, v);
-					processed.Add(t);
+
+			if (!disc.Contains(v) && v.type != Node.NodeType.Block) {
+				disc.Add(v);
+				foreach (Node n in v.neighbours) {
+					s.Push(n);
+					if (!discovered.ContainsKey(n) && n.type != Node.NodeType.Block) {
+						discovered.Add(n, v);
+						processed.Add(n);
+					}
 				}
 			}
 		}
+		s.Clear();
 		return new List<Node>();
 	}
 }

@@ -5,8 +5,7 @@ using UnityEngine.UI;
 
 public class UserInterface : MonoBehaviour {
 
-	List<TileProperties> multiSelected = new List<TileProperties>();
-
+	List<Node> multiSelected = new List<Node>();
 	public float visualizationSpeed;
 	public Color emptyC, blockC, startC, endC, processedC, pathC;
 
@@ -18,17 +17,16 @@ public class UserInterface : MonoBehaviour {
 	public enum SearchMethod { BFS, DFS }
 	public SearchMethod useMethod;
 
-	Map map;
 	BFS bfs;
 	DFS dfs;
 
-	List<TileProperties> processed;
-	List<TileProperties> path;
+	List<Node> processed;
+	List<Node> path;
 
 	bool visualizeRunning;
+	Coroutine currentVis;
 
 	void Start () {
-		map = FindObjectOfType<Map>();
 		bfs = FindObjectOfType<BFS>();
 		dfs = FindObjectOfType<DFS>();
 	}
@@ -36,7 +34,8 @@ public class UserInterface : MonoBehaviour {
 	void Update () {
 		// Selecting
 		if (Input.GetKey(KeyCode.Mouse0)) {
-			var selected = SelectTile();
+			var selected = MouseSelect();
+
 			if (selected != null && !multiSelected.Contains(selected)) {
 				multiSelected.Add(selected);
 				ChangeColor(selected, Color.green);
@@ -44,21 +43,30 @@ public class UserInterface : MonoBehaviour {
 		}
 		// Deselecting
 		if (Input.GetKey(KeyCode.Mouse1)) {
-			var selected = SelectTile();
+			var selected = MouseSelect();
+
 			if (selected != null && multiSelected.Contains(selected)) {
 				multiSelected.Remove(selected);
 				ColorByType(selected);
 			}
 		}
 
-		// Finalize grid
+		// Finalize grid and search
 		if (Input.GetKeyDown(KeyCode.Space)) {
 			multiSelected.Clear();
 			ResetAllColors();
-			var allTiles = map.tiles;
-			foreach (TileProperties t in allTiles) {
-				t.SetNeighbours();
+
+			bool canSearch = true;
+			if (Grid.start == null) {
+				Debug.LogError("NO START NODE");
+				canSearch = false;
 			}
+			if (Grid.end == null) {
+				Debug.LogError("NO END NODE");
+				canSearch = false;
+			}
+
+			if (!canSearch) { return; }
 
 			if (useMethod == SearchMethod.BFS) {
 				path = bfs.Search();
@@ -76,11 +84,9 @@ public class UserInterface : MonoBehaviour {
 		if (Input.GetKeyDown(KeyCode.Z)) {
 			ResetAllColors();
 		}
-
 		if (Input.GetKeyDown(KeyCode.Q) && !visualizeRunning) {
 			StartCoroutine(Visualize(processed, processedC));
 		}
-
 		if (Input.GetKeyDown(KeyCode.W) && !visualizeRunning) {
 			StartCoroutine(Visualize(path, pathC));
 		}
@@ -88,26 +94,36 @@ public class UserInterface : MonoBehaviour {
 		// EDITING
 		if (multiSelected.Count > 0) {
 			if (Input.GetKeyDown(KeyCode.Alpha1)) {
-				ChangeSelectedTypes(TileProperties.TileType.Empty);
+				ChangeSelectedTypes(Node.NodeType.Empty);
 			}
 			if (Input.GetKeyDown(KeyCode.Alpha2)) {
-				ChangeSelectedTypes(TileProperties.TileType.Block);
+				ChangeSelectedTypes(Node.NodeType.Block);
 			}
 			if (Input.GetKeyDown(KeyCode.Alpha3)) {
-				map.SetStart(multiSelected[0]);
-				ChangeSelectedTypes(TileProperties.TileType.Start);
+				Grid.SetStart(multiSelected[0]);
+				ChangeSelectedTypes(Node.NodeType.Start);
 			}
 			if (Input.GetKeyDown(KeyCode.Alpha4)) {
-				map.SetEnd(multiSelected[0]);
-				ChangeSelectedTypes(TileProperties.TileType.End);
+				Grid.SetEnd(multiSelected[0]);
+				ChangeSelectedTypes(Node.NodeType.End);
 			}
 		}
 	}
 
-	IEnumerator Visualize (List<TileProperties> p, Color c) {
+	Node MouseSelect () {
+		Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+		RaycastHit hit;
+
+		if (Physics.Raycast(ray, out hit)) {
+			return Grid.GetNodeWorldPoint(hit.point);
+		}
+		return null;
+	}
+
+	IEnumerator Visualize (List<Node> p, Color c) {
 		visualizeRunning = true;
 		while (p.Count > 0) {
-			if (p[0].type == TileProperties.TileType.Empty) {
+			if (p[0].type == Node.NodeType.Empty) {
 				ChangeColor(p[0], c);
 			}
 			p.RemoveAt(0);
@@ -117,77 +133,60 @@ public class UserInterface : MonoBehaviour {
 		yield return null;
 	}
 
-	void ChangeSelectedTypes (TileProperties.TileType type) {
-		foreach (TileProperties t in multiSelected) {
+	void ChangeSelectedTypes (Node.NodeType type) {
+		foreach (Node t in multiSelected) {
+			if (type != Node.NodeType.Start && t.type == Node.NodeType.Start) { Grid.SetStart(null); }
+			if (type != Node.NodeType.End && t.type == Node.NodeType.End) { Grid.SetEnd(null); }
+
 			t.SetTileType(type);
 			ColorByType(t);
 		}
 		multiSelected.Clear();
 	}
 
-	TileProperties SelectTile () {
-		Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-		RaycastHit hit;
-
-		TileProperties tile = null;
-		if (Physics.Raycast(ray, out hit)) {
-			tile = hit.transform.GetComponentInParent<TileProperties>();
-		}
-		return tile;
-	}
-
-	void ChangeColor (TileProperties tile, Color c) {
-		var renderer = tile.GetComponentInChildren<MeshRenderer>();
+	void ChangeColor (Node n, Color c) {
+		var renderer = n.visual.GetComponent<MeshRenderer>();
 		renderer.material.color = c;
 	}
 
-	void ColorByType (TileProperties tile) {
-		var renderer = tile.GetComponentInChildren<MeshRenderer>();
-		if (tile.type == TileProperties.TileType.Empty) {
+	void ColorByType (Node n) {
+		var renderer = n.visual.GetComponent<MeshRenderer>();
+		if (n.type == Node.NodeType.Empty) {
 			renderer.material.color = emptyC;
-		} else if (tile.type == TileProperties.TileType.Block) {
+		} else if (n.type == Node.NodeType.Block) {
 			renderer.material.color = blockC;
-		} else if (tile.type == TileProperties.TileType.Start) {
+		} else if (n.type == Node.NodeType.Start) {
 			renderer.material.color = startC;
-		} else if (tile.type == TileProperties.TileType.End) {
+		} else if (n.type == Node.NodeType.End) {
 			renderer.material.color = endC;
 		}
 	}
 
 	void ResetAllColors () {
-		var tiles = map.tiles;
-		foreach (TileProperties t in tiles) {
+		var nodes = Grid.nodes;
+		foreach (Node t in nodes) {
 			ColorByType(t);
 		}
 	}
 
-	List<TileProperties> GetNeighbours (TileProperties tile, int iterations, List<TileProperties> n) {
+	List<Node> GetNeighbours (Node node, int iterations, List<Node> n) {
 		if (iterations == 0) {
 			return n;
 		}
-		foreach(TileProperties t in tile.neighbours) {
+		foreach(Node t in node.neighbours) {
 			n.Add(t);
 			n = GetNeighbours(t, iterations - 1, n);
 		}
 		return n;
 	}
 
-	List<TileProperties> DeleteDuplicates (List<TileProperties> input) {
-		var output = new List<TileProperties>();
-		foreach (TileProperties t in input) {
-			if (!ContainsTile(output, t)) {
+	List<Node> DeleteDuplicates (List<Node> input) {
+		var output = new List<Node>();
+		foreach (Node t in input) {
+			if (!output.Contains(t)) {
 				output.Add(t);
 			}
 		}
 		return output;
-	}
-
-	bool ContainsTile (List<TileProperties> input, TileProperties tile) {
-		foreach (TileProperties t in input) {
-			if (t.index == tile.index) {
-				return true;
-			}
-		}
-		return false;
 	}
 }
