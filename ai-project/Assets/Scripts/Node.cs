@@ -48,51 +48,30 @@ public class Node {
 
 	List<Node> GetNeighbours (bool diagonal) {
 		var n = new List<Node>();
-
-		for (int x = -1; x <= 1; x++) {
-			for (int y = -1; y <= 1; y++) {
-				if (x == 0 && y == 0)
-					continue;
-				if(!diagonal && Mathf.Abs(x + y) != 1) {
-					continue;
-				}
-
-				int checkX = (int)coordinates.x + x;
-				int checkY = (int)coordinates.y + y;
-
-				if (checkX >= 0 && checkX < Grid.mapSize.x && checkY >= 0 && checkY < Grid.mapSize.y) {
-					n.Add(Grid.GetNode(checkX, checkY));
-				}
-			}
+		int count;
+		if (diagonal) {
+			count = 8;
+		} else {
+			count = 4;
 		}
 
-		//int x = (int)coordinates.x;
-		//int y = (int)coordinates.y;
+		float rot = 360f / count;
+		Vector3 pos = Vector3.up;
+		
+		for (int i = 0; i < count; i++) {
 
-		//if (x + 1 < Grid.mapSize.x) {
-		//	var neighbour = Grid.GetNode(x + 1, y);
-		//	if (neighbour != null) {
-		//		n.Add(neighbour);
-		//	}
-		//}
-		//if (y + 1 < Grid.mapSize.y) {
-		//	var neighbour = Grid.GetNode(x, y + 1);
-		//	if (neighbour != null) {
-		//		n.Add(neighbour);
-		//	}
-		//}
-		//if (x - 1 >= 0) {
-		//	var neighbour = Grid.GetNode(x - 1, y);
-		//	if (neighbour != null) {
-		//		n.Add(neighbour);
-		//	}
-		//}
-		//if (y - 1 >= 0) {
-		//	var neighbour = Grid.GetNode(x, y - 1);
-		//	if (neighbour != null) {
-		//		n.Add(neighbour);
-		//	}
-		//}
+			var newPos = Quaternion.Euler(0, 0, -rot * i) * pos;
+
+			int x = Mathf.RoundToInt(newPos.x);
+			int y = Mathf.RoundToInt(newPos.y);			
+
+			int checkX = (int)coordinates.x + x;
+			int checkY = (int)coordinates.y + y;
+
+			if (checkX >= 0 && checkX < Grid.mapSize.x && checkY >= 0 && checkY < Grid.mapSize.y) {
+				n.Add(Grid.GetNode(checkX, checkY));
+			}
+		}
 
 		return n;
 	}

@@ -45,6 +45,19 @@ public class UserInterface : MonoBehaviour {
 				ChangeColor(selected, Color.green);
 			}
 		}
+
+		if (Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.Mouse0)) {
+			var selected = MouseSelect();
+
+			if (selected != null) {
+				for (int i = 0; i < selected.neighbours.Count; i++) {
+					float r = (float)i / selected.neighbours.Count;
+					float g = 1 - r;
+					ChangeColor(selected.neighbours[i], new Color(r, g, 0));
+				}
+			}
+		}
+
 		// Deselecting
 		if (Input.GetKey(KeyCode.Mouse1)) {
 			var selected = MouseSelect();
