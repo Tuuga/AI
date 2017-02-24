@@ -14,11 +14,13 @@ public class UserInterface : MonoBehaviour {
 	[TextArea(15, 100)]
 	public string keys;
 
-	public enum SearchMethod { BFS, DFS }
+	public enum SearchMethod { BFS, DFS, Dijkstra, AStar }
 	public SearchMethod useMethod;
 
 	BFS bfs;
 	DFS dfs;
+	Dijkstra dijkstra;
+	AStar astar;
 
 	List<Node> processed;
 	List<Node> path;
@@ -29,6 +31,8 @@ public class UserInterface : MonoBehaviour {
 	void Start () {
 		bfs = FindObjectOfType<BFS>();
 		dfs = FindObjectOfType<DFS>();
+		dijkstra = FindObjectOfType<Dijkstra>();
+		astar = FindObjectOfType<AStar>();
 	}
 
 	void Update () {
@@ -56,6 +60,11 @@ public class UserInterface : MonoBehaviour {
 			multiSelected.Clear();
 			ResetAllColors();
 
+			var nodes = Grid.nodes;
+			foreach (Node n in nodes) {
+				n.FindConnections();
+			}
+
 			bool canSearch = true;
 			if (Grid.start == null) {
 				Debug.LogError("NO START NODE");
@@ -74,6 +83,12 @@ public class UserInterface : MonoBehaviour {
 			} else if (useMethod == SearchMethod.DFS) {
 				path = dfs.Search();
 				processed = dfs.processed;
+			} else if (useMethod == SearchMethod.Dijkstra) {
+				path = dijkstra.Search();
+				processed = dijkstra.processed;
+			} else if (useMethod == SearchMethod.AStar) {
+				path = astar.Search();
+				processed = astar.processed;
 			}
 
 			processedCount.text = "Processed: " + processed.Count;
@@ -84,11 +99,22 @@ public class UserInterface : MonoBehaviour {
 		if (Input.GetKeyDown(KeyCode.Z)) {
 			ResetAllColors();
 		}
+		if (Input.GetKeyDown(KeyCode.F)) {
+			var d = FindObjectOfType<Grid>().diagonalNeighbours;
+			foreach (Node n in Grid.nodes) {
+				n.FindNeighbours(d);
+			}
+		}
 		if (Input.GetKeyDown(KeyCode.Q) && !visualizeRunning) {
-			StartCoroutine(Visualize(processed, processedC));
+			currentVis = StartCoroutine(Visualize(processed, processedC));
 		}
 		if (Input.GetKeyDown(KeyCode.W) && !visualizeRunning) {
-			StartCoroutine(Visualize(path, pathC));
+			currentVis = StartCoroutine(Visualize(path, pathC));
+		}
+		if (Input.GetKeyDown(KeyCode.E) && visualizeRunning && currentVis != null) {
+			StopCoroutine(currentVis);
+			currentVis = null;
+			visualizeRunning = false;
 		}
 
 		// EDITING
@@ -130,6 +156,7 @@ public class UserInterface : MonoBehaviour {
 			yield return new WaitForSeconds(visualizationSpeed);
 		}
 		visualizeRunning = false;
+		currentVis = null;
 		yield return null;
 	}
 

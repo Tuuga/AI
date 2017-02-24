@@ -7,6 +7,7 @@ public class Grid : MonoBehaviour {
 
 	public static List<Node> nodes { get; private set; }
 	public Vector2 size;
+	public bool diagonalNeighbours;
 	public static Vector2 mapSize;
 	public static Node start { get; private set; }
 	public static Node end { get; private set; }
@@ -30,8 +31,21 @@ public class Grid : MonoBehaviour {
 		}
 
 		foreach (Node n in nodes) {
-			n.FindNeighbours();
+			n.FindNeighbours(diagonalNeighbours);
 		}
+	}
+
+	public static List<Connection> GetConnections(Node fromNode) {
+		List<Connection> connections = new List<Connection>();
+
+		foreach (Node n in fromNode.neighbours) {
+			if (n.type != Node.NodeType.Block) {
+				var cost = Vector3.Distance(fromNode.position, n.position);
+				connections.Add(new Connection(fromNode, n, cost));
+			}
+		}
+
+		return connections;
 	}
 
 	public static Node GetNodeWorldPoint (Vector3 point) {
