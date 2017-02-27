@@ -1,9 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEditor;
 
 public class Grid : MonoBehaviour {
+	public Material mat;
 	public PrimitiveType nodeVisualType;
 	public Vector3 nodeVisualRotation;
 	public Vector3 nodeVisualScale;
@@ -29,12 +29,6 @@ public class Grid : MonoBehaviour {
 		BuildGrid();
 		
 		if (generateRandom) {
-			var si = Random.Range(0, nodes.Count);
-			var ei = Random.Range(0, nodes.Count);
-			while (si == ei) {
-				ei = Random.Range(0, nodes.Count);
-			}
-
 			foreach (Node n in nodes) {
 				if (Random.Range(0, 100f) <= percentToBlock) {
 					n.SetNodeType(Node.NodeType.Block);
@@ -53,6 +47,7 @@ public class Grid : MonoBehaviour {
 				var g = GameObject.CreatePrimitive(nodeVisualType);
 				g.transform.localScale = nodeVisualScale;
 				g.transform.rotation = Quaternion.Euler(90, 0, 0);
+				g.GetComponent<MeshRenderer>().material = mat;
 				nodes.Add(new Node(coord, pos, g));
 			}
 		}
