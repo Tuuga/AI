@@ -4,17 +4,43 @@ using UnityEngine;
 using UnityEditor;
 
 public class Grid : MonoBehaviour {
+	public PrimitiveType nodeVisualType;
+	public Vector3 nodeVisualRotation;
+	public Vector3 nodeVisualScale;
 
 	public static List<Node> nodes { get; private set; }
+	[Space()]
 	public Vector2 size;
+
+	public bool generateRandom;
+	public float percentToBlock;
+
 	public bool diagonalNeighbours;
 	public static Vector2 mapSize;
-	public static Node start { get; private set; }
-	public static Node end { get; private set; }
+
+	public int MaxSize {
+		get {
+			return (int)(size.x * size.y);
+		}
+	}
 
 	void Awake () {
 		mapSize = size;
 		BuildGrid();
+		
+		if (generateRandom) {
+			var si = Random.Range(0, nodes.Count);
+			var ei = Random.Range(0, nodes.Count);
+			while (si == ei) {
+				ei = Random.Range(0, nodes.Count);
+			}
+
+			foreach (Node n in nodes) {
+				if (Random.Range(0, 100f) <= percentToBlock) {
+					n.SetNodeType(Node.NodeType.Block);
+				}
+			}
+		}
 	}
 
 	void BuildGrid () {
@@ -24,7 +50,8 @@ public class Grid : MonoBehaviour {
 			for (int x = 0; x < mapSize.x; x++) {
 				var coord = new Vector2(x, y);
 				var pos = new Vector3(x, 0, y);
-				var g = GameObject.CreatePrimitive(PrimitiveType.Quad);
+				var g = GameObject.CreatePrimitive(nodeVisualType);
+				g.transform.localScale = nodeVisualScale;
 				g.transform.rotation = Quaternion.Euler(90, 0, 0);
 				nodes.Add(new Node(coord, pos, g));
 			}
@@ -33,19 +60,6 @@ public class Grid : MonoBehaviour {
 		foreach (Node n in nodes) {
 			n.FindNeighbours(diagonalNeighbours);
 		}
-	}
-
-	public static List<Connection> GetConnections(Node fromNode) {
-		List<Connection> connections = new List<Connection>();
-
-		foreach (Node n in fromNode.neighbours) {
-			if (n.type != Node.NodeType.Block) {
-				var cost = Vector3.Distance(fromNode.position, n.position);
-				connections.Add(new Connection(fromNode, n, cost));
-			}
-		}
-
-		return connections;
 	}
 
 	public static Node GetNodeWorldPoint (Vector3 point) {
@@ -73,13 +87,5 @@ public class Grid : MonoBehaviour {
 
 	public static int GetNodeIndex (int x, int y) {
 		return (int)(y * mapSize.y + x);
-	}
-
-	public static void SetStart (Node n) {
-		start = n;
-	}
-
-	public static void SetEnd (Node n) {
-		end = n;
 	}
 }

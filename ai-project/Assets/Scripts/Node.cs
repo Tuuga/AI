@@ -2,22 +2,24 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Node {
+public class Node : IHeapItem<Node> {
 
-	public enum NodeType { Empty, Block, Start, End }
+	public enum NodeType { Empty, Block}
 	public NodeType type { get; private set; }
 	
 	public Vector2 coordinates { get; private set; }
 	public Vector3 position { get; private set; }
 	public List<Node> neighbours { get; private set; }
-	public List<Connection> connections { get; private set; }
 	public GameObject visual { get; private set; }
 
 	public Node parent;
 
 	public int gCost;
 	public int hCost;
-	public int fCost { get { return gCost + hCost; } }
+	public int vCost; // JUST TESTING
+	public int fCost { get { return gCost + hCost + vCost; } }
+
+	int heapIndex;
 
 	public Node (Vector2 _coord, Vector3 _pos, GameObject _visual = null) {
 		coordinates = _coord;
@@ -30,20 +32,33 @@ public class Node {
 
 	public Node () { }
 
+	public int HeapIndex {
+		get {
+			return heapIndex; 
+		}
+		set {
+			heapIndex = value;
+		}
+	}
+
+	public int CompareTo(Node nodeToCompare) {
+		int compare = fCost.CompareTo(nodeToCompare.fCost);
+		if (compare == 0) {
+			compare = hCost.CompareTo(nodeToCompare.hCost);
+		}
+		return -compare;
+	}
+
 	public void SetCoordinates (int x, int y) {
 		coordinates = new Vector2(x, y);
 	}
 
-	public void SetTileType (NodeType newType) {
+	public void SetNodeType (NodeType newType) {
 		type = newType;
 	}
 
 	public void FindNeighbours (bool diagonal) {
 		neighbours = GetNeighbours(diagonal);
-	}
-
-	public void FindConnections () {
-		connections = Grid.GetConnections(this);
 	}
 
 	List<Node> GetNeighbours (bool diagonal) {

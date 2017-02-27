@@ -1,42 +1,53 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 public class AStar : MonoBehaviour {
 
 	public List<Node> processed { get; private set; }
+	Grid grid;
 
-	public List<Node> Search () {
+	void Start () {
+		grid = FindObjectOfType<Grid>();
+	}
+
+
+	public List<Node> Search (Node start, Node end) {
+		var sw = new Stopwatch();
+		sw.Start();
+
 		processed = new List<Node>();
 
-		var startNode = Grid.start;
-		var targetNode = Grid.end;
-
-		List<Node> open = new List<Node>();
+		//List<Node> open = new List<Node>();
+		Heap<Node> open = new Heap<Node>(grid.MaxSize);
 		HashSet<Node> closed = new HashSet<Node>();
-		open.Add(startNode);
-		processed.Add(startNode);
+		open.Add(start);
+		processed.Add(start);
 
 		while (open.Count > 0) {
-			Node currentNode = open[0];
-			for (int i = 1; i < open.Count; i++) {
-				if (open[i].fCost < currentNode.fCost || open[i].fCost == currentNode.fCost && open[i].hCost < currentNode.hCost) {
-					currentNode = open[i];
-				}
-			}
+			Node currentNode = open.RemoveFirst();
+			//Node currentNode = open[0];
+			//for (int i = 1; i < open.Count; i++) {
+			//	if (open[i].fCost < currentNode.fCost || open[i].fCost == currentNode.fCost && open[i].hCost < currentNode.hCost) {
+			//		currentNode = open[i];
+			//	}
+			//}
 
-			open.Remove(currentNode);
+			//open.Remove(currentNode);
 			closed.Add(currentNode);
 
-			if (currentNode == targetNode) {
+			if (currentNode == end) {
 				List<Node> path = new List<Node>();
-				Node current = targetNode;
+				Node current = end;
 
-				while (current != startNode) {
+				while (current != start) {
 					path.Add(current);
 					current = current.parent;
 				}
 				path.Reverse();
+				sw.Stop();
+				print(sw.ElapsedMilliseconds);
 				return path;
 			}
 
@@ -48,7 +59,8 @@ public class AStar : MonoBehaviour {
 				int newMovementCostToNeighbour = currentNode.gCost + GetDistance(currentNode, neighbour);
 				if (newMovementCostToNeighbour < neighbour.gCost || !open.Contains(neighbour)) {
 					neighbour.gCost = newMovementCostToNeighbour;
-					neighbour.hCost = GetDistance(neighbour, targetNode);
+					neighbour.hCost = GetDistance(neighbour, end);
+					//neighbour.vCost = Mathf.RoundToInt(Vector3.Distance(neighbour.position, targetNode.position) * 10f);
 					neighbour.parent = currentNode;
 					
 					if (!open.Contains(neighbour)) {

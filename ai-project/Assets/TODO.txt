@@ -1,0 +1,7 @@
+﻿Remove End and Start from NodeType
+Remove end and start from Grid
+
+Start and end should be given as a parameter
+Each class can use GetNodeWorldPoint function from Grid to Get the desired nodes
+
+UserInterface to paint mode, not select and modify

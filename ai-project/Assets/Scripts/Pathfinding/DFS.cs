@@ -6,19 +6,19 @@ public class DFS : MonoBehaviour {
 
 	public List<Node> processed { get; private set; }
 
-	public List<Node> Search () {
+	public List<Node> Search (Node start, Node end) {
 		processed = new List<Node>();
 		var s = new Stack<Node>();
 
 		var discovered = new Dictionary<Node, Node>();
-		discovered.Add(Grid.start, null);
+		discovered.Add(start, null);
 		var disc = new List<Node>();
 
-		s.Push(Grid.start);
+		s.Push(start);
 		while (s.Count > 0) {
 			var v = s.Pop();
 
-			if (v.type == Node.NodeType.End) {
+			if (v == end) {
 				var path = new List<Node>();
 				path.Add(v);
 				var lastNode = discovered[v];
@@ -41,7 +41,6 @@ public class DFS : MonoBehaviour {
 				}
 			}
 		}
-		s.Clear();
 		return new List<Node>();
 	}
 }
