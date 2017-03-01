@@ -14,8 +14,8 @@ public class AStar : MonoBehaviour {
 
 
 	public List<Node> Search (Node start, Node end) {
-		var sw = new Stopwatch();
-		sw.Start();
+		//var sw = new Stopwatch();
+		//sw.Start();
 
 		processed = new List<Node>();
 
@@ -46,8 +46,8 @@ public class AStar : MonoBehaviour {
 					current = current.parent;
 				}
 				path.Reverse();
-				sw.Stop();
-				print(sw.ElapsedMilliseconds);
+				//sw.Stop();
+				//print(sw.ElapsedMilliseconds);
 				return path;
 			}
 

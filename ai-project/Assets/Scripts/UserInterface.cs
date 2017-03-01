@@ -24,8 +24,8 @@ public class UserInterface : MonoBehaviour {
 	DFS dfs;
 	AStar astar;
 
-	Node start;
-	Node end;
+	public Node start { get; private set; }
+	public Node end { get; private set; }
 
 	List<Node> processed;
 	List<Node> path;
@@ -33,10 +33,14 @@ public class UserInterface : MonoBehaviour {
 	bool visualizeRunning;
 	Coroutine currentVis;
 
+	// Player movement stuff
+	PathMovement pm;
+
 	void Start () {
 		bfs = FindObjectOfType<BFS>();
 		dfs = FindObjectOfType<DFS>();
 		astar = FindObjectOfType<AStar>();
+		pm = FindObjectOfType<PathMovement>();
 	}
 
 	void Update () {
@@ -59,6 +63,9 @@ public class UserInterface : MonoBehaviour {
 						
 					} else if (currentPaintMode == PaintMode.Block) {
 						foundNode.SetNodeType(Node.NodeType.Block);
+						if (pm.path != null && pm.path.Contains(foundNode)) {
+							pm.recalculate = true;
+						}
 					}
 				}
 				ColorByType(foundNode);
