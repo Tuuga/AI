@@ -9,9 +9,6 @@ public class UserInterface : MonoBehaviour {
 	enum PaintMode { Empty, Block, Start, End }
 	PaintMode currentPaintMode;
 
-	public float visualizationSpeed;
-	public Color emptyC, blockC, startC, endC, processedC, pathC;
-
 	public Text processedCount, pathCount, methodType, time, paintMode;
 
 	[TextArea(15, 100)]
@@ -30,8 +27,7 @@ public class UserInterface : MonoBehaviour {
 	List<Node> processed;
 	List<Node> path;
 
-	bool visualizeRunning;
-	Coroutine currentVis;
+	PathFindingVisualizer vis;
 
 	// Player movement stuff
 	PathMovement pm;
@@ -41,6 +37,7 @@ public class UserInterface : MonoBehaviour {
 		dfs = FindObjectOfType<DFS>();
 		astar = FindObjectOfType<AStar>();
 		pm = FindObjectOfType<PathMovement>();
+		vis = FindObjectOfType<PathFindingVisualizer>();
 	}
 
 	void Update () {
@@ -50,31 +47,33 @@ public class UserInterface : MonoBehaviour {
 				if (Input.GetKeyDown(KeyCode.Mouse0)) {			// If pressed down this frame
 					if (currentPaintMode == PaintMode.Start) {
 						foundNode.SetNodeType(Node.NodeType.Empty);
-						if (start != null) { ChangeColor(start, emptyC); }
 						start = foundNode;
+						vis.ColorStartNode(start);
 					} else if (currentPaintMode == PaintMode.End) {
 						foundNode.SetNodeType(Node.NodeType.Empty);
-						if (end != null) { ChangeColor(end, emptyC); }
 						end = foundNode;
+						vis.ColorEndNode(end);
 					}
 				} else {
 					if (currentPaintMode == PaintMode.Empty) {
-						foundNode.SetNodeType(Node.NodeType.Empty);
-						
-					} else if (currentPaintMode == PaintMode.Block) {
+						if (foundNode == start || foundNode == end || foundNode.type != Node.NodeType.Empty) {
+							foundNode.SetNodeType(Node.NodeType.Empty);
+							vis.ColorNodeByType(foundNode);
+						}						
+					} else if (currentPaintMode == PaintMode.Block && foundNode.type != Node.NodeType.Block) {
 						foundNode.SetNodeType(Node.NodeType.Block);
-						if (pm.path != null && pm.path.Contains(foundNode)) {
+						vis.ColorNodeByType(foundNode);
+						if (pm != null && pm.path != null && pm.path.Contains(foundNode)) {
 							pm.recalculate = true;
 						}
 					}
 				}
-				ColorByType(foundNode);
 			}
 		}
 
 		// Finalize grid and search
 		if (Input.GetKeyDown(KeyCode.Space)) {
-			ResetAllColors();
+			vis.ResetAllColors(start, end);
 
 			bool canSearch = true;
 			if (start == null) {
@@ -107,26 +106,21 @@ public class UserInterface : MonoBehaviour {
 			methodType.text = "Method: " + useMethod.ToString();
 			time.text = "Time: " + sw.Elapsed;
 		}
-
-		if (Input.GetKeyDown(KeyCode.Z)) {
-			ResetAllColors();
-		}
+		
 		if (Input.GetKeyDown(KeyCode.F)) {
 			var d = FindObjectOfType<Grid>().diagonalNeighbours;
 			foreach (Node n in Grid.nodes) {
 				n.FindNeighbours(d);
 			}
 		}
-		if (Input.GetKeyDown(KeyCode.Q) && !visualizeRunning) {
-			currentVis = StartCoroutine(Visualize(processed, processedC));
+		if (Input.GetKeyDown(KeyCode.Q)) {
+			vis.VisualizeVisited(processed);
 		}
-		if (Input.GetKeyDown(KeyCode.W) && !visualizeRunning) {
-			currentVis = StartCoroutine(Visualize(path, pathC));
+		if (Input.GetKeyDown(KeyCode.W)) {
+			vis.VisualizePath(path);
 		}
-		if (Input.GetKeyDown(KeyCode.E) && visualizeRunning && currentVis != null) {
-			StopCoroutine(currentVis);
-			currentVis = null;
-			visualizeRunning = false;
+		if (Input.GetKeyDown(KeyCode.E)) {
+			vis.ResetAllColors(start, end);
 		}
 
 		// PaintMode
@@ -158,49 +152,49 @@ public class UserInterface : MonoBehaviour {
 		return null;
 	}
 
-	IEnumerator Visualize (List<Node> p, Color c) {
-		visualizeRunning = true;
-		while (p.Count > 0) {
-			if (p[0].type == Node.NodeType.Empty && !(p[0] == start || p[0] == end)) {
-				ChangeColor(p[0], c);
-			}
-			p.RemoveAt(0);
+	//IEnumerator Visualize (List<Node> p, Color c) {
+	//	visualizeRunning = true;
+	//	while (p.Count > 0) {
+	//		if (p[0].type == Node.NodeType.Empty && !(p[0] == start || p[0] == end)) {
+	//			ChangeColor(p[0], c);
+	//		}
+	//		p.RemoveAt(0);
 
-			if (visualizationSpeed >= 0) {
-				yield return new WaitForSeconds(visualizationSpeed);
-			}
-		}
-		visualizeRunning = false;
-		currentVis = null;
-		yield return null;
-	}
+	//		if (visualizationSpeed >= 0) {
+	//			yield return new WaitForSeconds(visualizationSpeed);
+	//		}
+	//	}
+	//	visualizeRunning = false;
+	//	currentVis = null;
+	//	yield return null;
+	//}
 
-	void ChangeColor (Node n, Color c) {
-		var renderer = n.visual.GetComponent<MeshRenderer>();
-		renderer.material.color = c;
-	}
+	//void ChangeColor (Node n, Color c) {
+	//	var renderer = n.visual.GetComponent<MeshRenderer>();
+	//	renderer.material.color = c;
+	//}
 
-	void ColorByType (Node n) {
-		var renderer = n.visual.GetComponent<MeshRenderer>();
-		if (n != start && n != end) {
-			if (n.type == Node.NodeType.Empty) {
-				renderer.material.color = emptyC;
-			} else if (n.type == Node.NodeType.Block) {
-				renderer.material.color = blockC;
-			}
-		} else {
-			if (n == start) {
-				renderer.material.color = startC;
-			} else if (n == end) {
-				renderer.material.color = endC;
-			}
-		}
-	}
+	//void ColorByType (Node n) {
+	//	var renderer = n.visual.GetComponent<MeshRenderer>();
+	//	if (n != start && n != end) {
+	//		if (n.type == Node.NodeType.Empty) {
+	//			renderer.material.color = emptyC;
+	//		} else if (n.type == Node.NodeType.Block) {
+	//			renderer.material.color = blockC;
+	//		}
+	//	} else {
+	//		if (n == start) {
+	//			renderer.material.color = startC;
+	//		} else if (n == end) {
+	//			renderer.material.color = endC;
+	//		}
+	//	}
+	//}
 
-	void ResetAllColors () {
-		var nodes = Grid.nodes;
-		foreach (Node t in nodes) {
-			ColorByType(t);
-		}
-	}
+	//void ResetAllColors () {
+	//	var nodes = Grid.nodes;
+	//	foreach (Node t in nodes) {
+	//		ColorByType(t);
+	//	}
+	//}
 }
