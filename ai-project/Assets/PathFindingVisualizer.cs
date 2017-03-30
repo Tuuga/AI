@@ -7,8 +7,6 @@ public class PathFindingVisualizer : MonoBehaviour {
 	public Color emptyColor, blockColor, startColor, endColor, pathColor, visitedColor;
 	public float visualizationSpeed;
 
-	bool visualizerRunning;
-
 	Coroutine currentVis;
 
 	public void VisualizePath (List<Node> path) {
@@ -22,7 +20,6 @@ public class PathFindingVisualizer : MonoBehaviour {
 	}
 
 	IEnumerator Visualize (List<Node> p, Color c) {
-		visualizerRunning = true;
 		while (p.Count > 0) {
 			if (p[0].type == Node.NodeType.Empty) {
 				ColorNode(p[0], c);
@@ -33,7 +30,6 @@ public class PathFindingVisualizer : MonoBehaviour {
 				yield return new WaitForSeconds(visualizationSpeed);
 			}
 		}
-		visualizerRunning = false;
 		currentVis = null;
 	}
 

@@ -3,26 +3,21 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemyController : MonoBehaviour {
-
 	public float confidenceRegen;
 
 	public float confidence { get; private set; }
 
-	EnemyCoverSystem coverSystem;
-	EnemyAttacking attacking;
-	EnemyMovement movement;
+	PathMovement movement;
 	Transform player;
 
 	void Start () {
-		coverSystem = GetComponent<EnemyCoverSystem>();
-		attacking = GetComponent<EnemyAttacking>();
-		movement = GetComponent<EnemyMovement>();
+		movement = GetComponent<PathMovement>();
 		player = FindObjectOfType<PlayerController>().transform;
 	}
 
 	void Update () {
 
-		if (!coverSystem.HasLineOfSight(transform.position, player)) {
+		if (!AIUtilities.HasLineOfSight(transform.position, player)) {
 			confidence += confidenceRegen * Time.deltaTime;
 		}
 
@@ -35,10 +30,19 @@ public class EnemyController : MonoBehaviour {
 			movement.StopMoving();
 		}
 
+		Vector3 moveToPoint = Vector3.down;
 		if (confidence < 50f) {
-			coverSystem.TakeCover();
+			if (AIUtilities.HasLineOfSight(transform.position, player)) {
+				moveToPoint = AIUtilities.GetPointInCover(transform.position, player);
+			}
 		} else {
-			attacking.MoveTowardsPlayer();
+			if (!AIUtilities.HasLineOfSight(transform.position, player)) {
+				moveToPoint = AIUtilities.GetClosestPointWithLOS(transform.position, player);
+			}
+		}
+
+		if (moveToPoint != Vector3.down) {
+			movement.MoveToPoint(moveToPoint);
 		}
 	}
 

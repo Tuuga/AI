@@ -60,7 +60,6 @@ public class AStar : MonoBehaviour {
 				if (newMovementCostToNeighbour < neighbour.gCost || !open.Contains(neighbour)) {
 					neighbour.gCost = newMovementCostToNeighbour;
 					neighbour.hCost = GetDistance(neighbour, end);
-					//neighbour.vCost = Mathf.RoundToInt(Vector3.Distance(neighbour.position, targetNode.position) * 10f);
 					neighbour.parent = currentNode;
 					
 					if (!open.Contains(neighbour)) {

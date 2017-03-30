@@ -5,9 +5,6 @@ using UnityEngine;
 public class PathMovement : MonoBehaviour {
 
 	public float speed;
-	public bool recalculate;
-
-	UserInterface ui;
 	AStar aStar;
 
 	Node endNode = new Node();
@@ -18,28 +15,26 @@ public class PathMovement : MonoBehaviour {
 	Coroutine currentRunning;
 
 	void Start () {
-		ui = FindObjectOfType<UserInterface>();
 		aStar = FindObjectOfType<AStar>();
 	}
 
-	void Update () {
-		// Start and end exists
-		// the endNode is not the same as uis endNode
-
-		if (ui.end != null && endNode != ui.end || recalculate) {
-			endNode = ui.end;
-			recalculate = false;
-
-			startNode = Grid.GetNodeWorldPoint(transform.position);
-			path = aStar.Search(startNode, ui.end);
-
-			VisualizePath();
-
-			if (currentRunning != null) {
-				StopCoroutine(currentRunning);
-			}
-			currentRunning = StartCoroutine(Move());
+	public void MoveToPoint (Vector3 point) {
+		if (endNode == Grid.GetNodeWorldPoint(point)) {
+			return;
 		}
+
+		startNode = Grid.GetNodeWorldPoint(transform.position);
+		endNode = Grid.GetNodeWorldPoint(point);
+		path = aStar.Search(startNode, endNode);
+
+		if (currentRunning != null) { StopCoroutine(currentRunning); }
+		currentRunning = StartCoroutine(Move());
+		VisualizePath();
+	}
+
+	public void StopMoving () {
+		StopCoroutine(currentRunning);
+		currentRunning = null;
 	}
 
 	IEnumerator Move () {
@@ -72,5 +67,5 @@ public class PathMovement : MonoBehaviour {
 		for (int i = 0; i < path.Count - 1; i++) {
 			Debug.DrawLine(path[i].position, path[i + 1].position, Color.green, time);
 		}
-	}
+	}	
 }

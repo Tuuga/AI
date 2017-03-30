@@ -59,12 +59,12 @@ public class UserInterface : MonoBehaviour {
 						if (foundNode == start || foundNode == end || foundNode.type != Node.NodeType.Empty) {
 							foundNode.SetNodeType(Node.NodeType.Empty);
 							vis.ColorNodeByType(foundNode);
-						}						
+						}
 					} else if (currentPaintMode == PaintMode.Block && foundNode.type != Node.NodeType.Block) {
 						foundNode.SetNodeType(Node.NodeType.Block);
 						vis.ColorNodeByType(foundNode);
 						if (pm != null && pm.path != null && pm.path.Contains(foundNode)) {
-							pm.recalculate = true;
+							//pm.recalculate = true;
 						}
 					}
 				}
