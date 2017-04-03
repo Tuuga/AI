@@ -94,10 +94,11 @@ public class AIUtilities : MonoBehaviour {
 				return v.position;
 			}
 
+			
 			foreach (Node t in v.neighbours) {
-				if (!discovered.Contains(t) && t.type != Node.NodeType.Block) {
+				if (!discovered.Contains(t) && v.type != Node.NodeType.Block) {
+					discovered.Add(t);
 					q.Enqueue(t);
-					discovered.Add(v);
 				}
 			}
 		}
@@ -124,9 +125,9 @@ public class AIUtilities : MonoBehaviour {
 			}
 
 			foreach (Node t in v.neighbours) {
-				if (!discovered.Contains(t) && t.type != Node.NodeType.Block) {
+				if (!discovered.Contains(t) && v.type != Node.NodeType.Block) {
+					discovered.Add(t);
 					q.Enqueue(t);
-					discovered.Add(v);
 				}
 			}
 		}

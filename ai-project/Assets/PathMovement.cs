@@ -33,7 +33,9 @@ public class PathMovement : MonoBehaviour {
 	}
 
 	public void StopMoving () {
-		StopCoroutine(currentRunning);
+		if (currentRunning != null) {
+			StopCoroutine(currentRunning);
+		}
 		currentRunning = null;
 	}
 
