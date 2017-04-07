@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemyController : MonoBehaviour {
+	public GameObject lastKnownVisual;
+
 	public float confidenceRegen;
 
 	public float confidence { get; private set; }
@@ -11,8 +13,8 @@ public class EnemyController : MonoBehaviour {
 	EnemyAiming aiming;
 	EnemyShooting shooting;
 
-	Transform player;
-	Vector3 lastPlayerPos;
+	PlayerController player;
+	Vector3 lastKnownPlayerLocation;
 
 	Node movingToNode;
 
@@ -21,16 +23,22 @@ public class EnemyController : MonoBehaviour {
 		aiming = GetComponent<EnemyAiming>();
 		shooting = GetComponent<EnemyShooting>();
 
-		player = FindObjectOfType<PlayerController>().transform;
+		player = FindObjectOfType<PlayerController>();
 	}
 
 	void Update () {
+		bool hasLOSToPlayer = AIUtilities.HasLineOfSight(transform.position, player.transform.position, player);
 
-		var playerPos = player.position;
-		playerPos.y = 0;
-		aiming.LookAt(playerPos);
+		if (hasLOSToPlayer) {
+			lastKnownPlayerLocation = player.transform.position;
+			lastKnownVisual.transform.position = lastKnownPlayerLocation;
+		}
 
-		if (!AIUtilities.HasLineOfSight(transform.position, player)) {
+		var aimPos = lastKnownPlayerLocation;
+		aimPos.y = 0;
+		aiming.LookAt(aimPos);
+
+		if (!hasLOSToPlayer) {
 			confidence += confidenceRegen * Time.deltaTime;
 		}
 
@@ -45,15 +53,25 @@ public class EnemyController : MonoBehaviour {
 		}
 
 		Vector3 moveToPoint = Vector3.down;
+
+		// Getting in cover
 		if (confidence < 50f) {
-			if (AIUtilities.HasLineOfSight(transform.position, player) && lastPlayerPos != player.position) {
-				moveToPoint = AIUtilities.GetClosestLOSPoint(this, transform.position, player, false);
+			if (hasLOSToPlayer /*&& lastPlayerPos != player.transform.position*/) {
+				moveToPoint = AIUtilities.GetClosestLOSPoint(this, transform.position, player.transform.position, false, player);
 			}
+
+			// Attacking player
 		} else {
-			if (!AIUtilities.HasLineOfSight(transform.position, player) && lastPlayerPos != player.position) {
-				moveToPoint = AIUtilities.GetClosestLOSPoint(this, transform.position, player, true);
-			} else if (AIUtilities.HasLineOfSight(transform.position, player)) {
+			if (hasLOSToPlayer) {
 				shooting.Shoot(transform.forward);
+			} else {
+				if (AIUtilities.HasLineOfSight(transform.position, lastKnownPlayerLocation)) {
+					print("has los");
+					moveToPoint = lastKnownPlayerLocation;
+				} else {
+					print("no los");
+					moveToPoint = AIUtilities.GetClosestLOSPoint(this, transform.position, lastKnownPlayerLocation, true);
+				}
 			}
 		}
 
@@ -61,8 +79,6 @@ public class EnemyController : MonoBehaviour {
 			movement.MoveToPoint(moveToPoint);
 			movingToNode = Grid.GetNodeWorldPoint(moveToPoint);
 		}
-
-		lastPlayerPos = player.position;
 	}
 
 	public void AffectConfidence (float effect) {

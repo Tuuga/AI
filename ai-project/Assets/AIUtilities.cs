@@ -10,21 +10,28 @@ public class AIUtilities : MonoBehaviour {
 	static AStar aStar;
 	static public List<EnemyController> enemies { get; private set; }
 
+	static PlayerController player;
+
 	void Start () {
 		aStar = FindObjectOfType<AStar>();
 		mask = layerMask;
 		enemies = new List<EnemyController>(FindObjectsOfType<EnemyController>());
+		player = FindObjectOfType<PlayerController>();
 	}
 
-	public static bool HasLineOfSight (Vector3 from, Transform to) {
-		var dir = to.position - from;
+	public static bool HasLineOfSight (Vector3 from, Vector3 to, MonoBehaviour target = null) {
+		var dir = to - from;
 		Ray ray = new Ray(from, dir);
 		RaycastHit hit;
-		if (Physics.Raycast(ray, out hit, Mathf.Infinity, mask)) {
-			var colls = new List<Collider>(to.GetComponentsInChildren<Collider>());
-			return colls.Contains(hit.collider);
+
+		bool rayCast = Physics.Raycast(ray, out hit, dir.magnitude, mask);
+		if (rayCast) {
+			if (target != null) {
+				var colls = new List<Collider>(target.GetComponentsInChildren<Collider>());
+				return colls.Contains(hit.collider);
+			}
 		}
-		return false;
+		return rayCast;
 	}
 
 	public static List<Vector3> NodesToPoints (List<Node> nodes) {
@@ -61,7 +68,7 @@ public class AIUtilities : MonoBehaviour {
 		return dist;
 	}
 
-	public static Vector3 GetClosestLOSPoint (EnemyController calledFrom, Vector3 from, Transform to, bool withLOS) {
+	public static Vector3 GetClosestLOSPoint (EnemyController calledFrom, Vector3 from, Vector3 to, bool withLOS, MonoBehaviour target = null) {
 
 		Node start = Grid.GetNodeWorldPoint(from);
 		if (start == null) {
@@ -77,6 +84,13 @@ public class AIUtilities : MonoBehaviour {
 		while (q.Count > 0) {
 			var v = q.Dequeue();
 
+			if (v.type == Node.NodeType.Block) {
+				continue;
+			}
+			if (v == Grid.GetNodeWorldPoint(player.transform.position)) {
+				continue;
+			}
+
 			bool validNode = true;
 			foreach (EnemyController e in enemies) {
 				if (e == calledFrom) {
@@ -89,17 +103,13 @@ public class AIUtilities : MonoBehaviour {
 			}
 			if (!validNode) {
 				continue;
-			}
+			}			
 
-			if (v.type == Node.NodeType.Block) {
-				continue;
-			}
-
-			if (HasLineOfSight(v.position, to) == withLOS) {
-				Debug.DrawLine(v.position, to.position, Color.green);
+			if (HasLineOfSight(v.position, to, target) == withLOS) {
+				Debug.DrawLine(v.position, to, Color.green);
 				return v.position;
 			} else {
-				Debug.DrawLine(v.position, to.position, Color.red);
+				Debug.DrawLine(v.position, to, Color.red);
 			}
 
 			foreach (Node t in v.neighbours) {
