@@ -14,12 +14,8 @@ public class AStar : MonoBehaviour {
 
 
 	public List<Node> Search (Node start, Node end) {
-		//var sw = new Stopwatch();
-		//sw.Start();
 
 		processed = new List<Node>();
-
-		//List<Node> open = new List<Node>();
 		Heap<Node> open = new Heap<Node>(grid.MaxSize);
 		HashSet<Node> closed = new HashSet<Node>();
 		open.Add(start);
@@ -27,14 +23,6 @@ public class AStar : MonoBehaviour {
 
 		while (open.Count > 0) {
 			Node currentNode = open.RemoveFirst();
-			//Node currentNode = open[0];
-			//for (int i = 1; i < open.Count; i++) {
-			//	if (open[i].fCost < currentNode.fCost || open[i].fCost == currentNode.fCost && open[i].hCost < currentNode.hCost) {
-			//		currentNode = open[i];
-			//	}
-			//}
-
-			//open.Remove(currentNode);
 			closed.Add(currentNode);
 
 			if (currentNode == end) {
@@ -46,8 +34,6 @@ public class AStar : MonoBehaviour {
 					current = current.parent;
 				}
 				path.Reverse();
-				//sw.Stop();
-				//print(sw.ElapsedMilliseconds);
 				return path;
 			}
 

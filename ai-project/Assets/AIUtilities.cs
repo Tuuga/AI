@@ -4,41 +4,28 @@ using UnityEngine;
 
 public class AIUtilities : MonoBehaviour {
 
+	public LayerMask layerMask;
+	static LayerMask mask;
+
 	static AStar aStar;
+	static public List<EnemyController> enemies { get; private set; }
 
 	void Start () {
 		aStar = FindObjectOfType<AStar>();
+		mask = layerMask;
+		enemies = new List<EnemyController>(FindObjectsOfType<EnemyController>());
 	}
 
 	public static bool HasLineOfSight (Vector3 from, Transform to) {
 		var dir = to.position - from;
 		Ray ray = new Ray(from, dir);
 		RaycastHit hit;
-		if (Physics.Raycast(ray, out hit)) {
-			return hit.transform.parent == to;
+		if (Physics.Raycast(ray, out hit, Mathf.Infinity, mask)) {
+			var colls = new List<Collider>(to.GetComponentsInChildren<Collider>());
+			return colls.Contains(hit.collider);
 		}
 		return false;
 	}
-
-	//public static List<Vector3> PointsWithLOS (List<Vector3> points, Transform target) {
-	//	var los = new List<Vector3>();
-	//	foreach (Vector3 v in points) {
-	//		if (HasLineOfSight(v, target)) {
-	//			los.Add(v);
-	//		}
-	//	}
-	//	return los;
-	//}
-
-	//public static List<Vector3> PointsWithoutLOS (List<Vector3> points, Transform target) {
-	//	var los = new List<Vector3>();
-	//	foreach (Vector3 v in points) {
-	//		if (!HasLineOfSight(v, target)) {
-	//			los.Add(v);
-	//		}
-	//	}
-	//	return los;
-	//}
 
 	public static List<Vector3> NodesToPoints (List<Node> nodes) {
 		var points = new List<Vector3>();
@@ -74,7 +61,7 @@ public class AIUtilities : MonoBehaviour {
 		return dist;
 	}
 
-	public static Vector3 GetClosestPointWithLOS (Vector3 from, Transform to) {
+	public static Vector3 GetClosestLOSPoint (EnemyController calledFrom, Vector3 from, Transform to, bool withLOS) {
 
 		Node start = Grid.GetNodeWorldPoint(from);
 		if (start == null) {
@@ -90,11 +77,31 @@ public class AIUtilities : MonoBehaviour {
 		while (q.Count > 0) {
 			var v = q.Dequeue();
 
-			if (HasLineOfSight(v.position, to)) {
-				return v.position;
+			bool validNode = true;
+			foreach (EnemyController e in enemies) {
+				if (e == calledFrom) {
+					continue;
+				}
+				if (v == e.GetAtNode() || v == e.GetMovingToNode()) {
+					validNode = false;
+					break;
+				}
+			}
+			if (!validNode) {
+				continue;
 			}
 
-			
+			if (v.type == Node.NodeType.Block) {
+				continue;
+			}
+
+			if (HasLineOfSight(v.position, to) == withLOS) {
+				Debug.DrawLine(v.position, to.position, Color.green);
+				return v.position;
+			} else {
+				Debug.DrawLine(v.position, to.position, Color.red);
+			}
+
 			foreach (Node t in v.neighbours) {
 				if (!discovered.Contains(t) && v.type != Node.NodeType.Block) {
 					discovered.Add(t);
@@ -105,32 +112,7 @@ public class AIUtilities : MonoBehaviour {
 		return Vector3.down;
 	}
 
-	public static Vector3 GetPointInCover (Vector3 from, Transform to) {
-		Node start = Grid.GetNodeWorldPoint(from);
-		if (start == null) {
-			return Vector3.down;
-		}
-
-		var q = new Queue<Node>();
-		q.Enqueue(start);
-
-		var discovered = new List<Node>();
-		discovered.Add(start);
-
-		while (q.Count > 0) {
-			var v = q.Dequeue();
-
-			if (!HasLineOfSight(v.position, to)) {
-				return v.position;
-			}
-
-			foreach (Node t in v.neighbours) {
-				if (!discovered.Contains(t) && v.type != Node.NodeType.Block) {
-					discovered.Add(t);
-					q.Enqueue(t);
-				}
-			}
-		}
-		return Vector3.down;
+	public static void EnemyDied (EnemyController enemy) {
+		enemies.Remove(enemy);
 	}
 }

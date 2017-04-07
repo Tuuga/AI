@@ -5,6 +5,7 @@ using UnityEngine;
 public class PathMovement : MonoBehaviour {
 
 	public float speed;
+	public bool showPath;
 	AStar aStar;
 
 	Node endNode = new Node();
@@ -29,7 +30,8 @@ public class PathMovement : MonoBehaviour {
 
 		if (currentRunning != null) { StopCoroutine(currentRunning); }
 		currentRunning = StartCoroutine(Move());
-		VisualizePath();
+
+		if (showPath) { VisualizePath(); }
 	}
 
 	public void StopMoving () {
