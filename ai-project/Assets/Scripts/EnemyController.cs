@@ -15,6 +15,7 @@ public class EnemyController : MonoBehaviour {
 
 	PlayerController player;
 	Vector3 lastKnownPlayerLocation;
+	Vector3 lastMoveToPoint;
 
 	Node movingToNode;
 
@@ -75,8 +76,10 @@ public class EnemyController : MonoBehaviour {
 			}
 		}
 
-		if (moveToPoint != Vector3.down) {
+		if (moveToPoint != Vector3.down && moveToPoint != lastMoveToPoint) {
+			print("<color=red>Moving</color>");
 			movement.MoveToPoint(moveToPoint);
+			lastMoveToPoint = moveToPoint;
 			movingToNode = Grid.GetNodeWorldPoint(moveToPoint);
 		}
 	}
