@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class EnemyController : MonoBehaviour {
 	public GameObject lastKnownVisual;
+	public GameObject moveToVisual;
 
 	public float confidenceRegen;
 
@@ -79,6 +80,7 @@ public class EnemyController : MonoBehaviour {
 		if (moveToPoint != Vector3.down && moveToPoint != lastMoveToPoint) {
 			print("<color=red>Moving</color>");
 			movement.MoveToPoint(moveToPoint);
+			moveToVisual.transform.position = moveToPoint;
 			lastMoveToPoint = moveToPoint;
 			movingToNode = Grid.GetNodeWorldPoint(moveToPoint);
 		}
